@@ -1,0 +1,23 @@
+2025/04/25-21:25:05.296 6c0c Reusing MANIFEST C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/04/25-21:25:05.303 6c0c Recovering log #178
+2025/04/25-21:25:05.396 6c0c Reusing old log C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000178.log 
+2025/04/25-21:25:08.581 7c50 Manual compaction at level-0 from '\x00\x1b\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x1c\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/04/25-21:25:24.039 6c0c Level-0 table #187: started
+2025/04/25-21:25:24.073 6c0c Level-0 table #187: 1069962 bytes OK
+2025/04/25-21:25:24.075 6c0c Delete type=0 #178
+2025/04/25-21:25:24.522 7c50 Compacting 1@1 + 6@2 files
+2025/04/25-21:25:24.612 7c50 Generated table #188@1: 48177 keys, 2204332 bytes
+2025/04/25-21:25:24.659 7c50 Generated table #189@1: 18248 keys, 2170894 bytes
+2025/04/25-21:25:24.715 7c50 Generated table #190@1: 11296 keys, 2184689 bytes
+2025/04/25-21:25:24.776 7c50 Generated table #191@1: 24494 keys, 2200642 bytes
+2025/04/25-21:25:24.881 7c50 Generated table #192@1: 92119 keys, 2240701 bytes
+2025/04/25-21:25:24.910 7c50 Generated table #193@1: 27155 keys, 596043 bytes
+2025/04/25-21:25:24.910 7c50 Compacted 1@1 + 6@2 files => 11597301 bytes
+2025/04/25-21:25:24.911 7c50 compacted to: files[ 0 0 6 0 0 0 0 ]
+2025/04/25-21:25:24.911 7c50 Delete type=2 #174
+2025/04/25-21:25:24.911 7c50 Delete type=2 #175
+2025/04/25-21:25:24.911 7c50 Delete type=2 #181
+2025/04/25-21:25:24.911 7c50 Delete type=2 #182
+2025/04/25-21:25:24.912 7c50 Delete type=2 #183
+2025/04/25-21:25:24.912 7c50 Delete type=2 #184
+2025/04/25-21:25:24.912 7c50 Delete type=2 #187
