@@ -5,8 +5,8 @@ import { useContext, useRef, useEffect, useState } from "react"
 import { Send } from "lucide-react"
 import { datacontext } from "../context/VoiceContext"
 
-function InputForm() {
-  const { status, aiResponse } = useContext(datacontext)
+function InputForm({ sessionId }) {
+  const { status, aiResponse, isAwake } = useContext(datacontext)
   const [textInput, setTextInput] = useState("")
   const inputRef = useRef(null)
 
@@ -14,12 +14,16 @@ function InputForm() {
     if (status === "Awake" && inputRef.current) {
       inputRef.current.focus()
     }
+    // Clear input when going to sleep
+    if (status === "Passive") {
+      setTextInput("")
+    }
   }, [status])
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (textInput.trim() === "") return
-    aiResponse(textInput)
+    if (textInput.trim() === "" || status === "Passive") return
+    aiResponse(textInput, sessionId)
     setTextInput("")
   }
 
@@ -38,58 +42,45 @@ function InputForm() {
           overflow: "hidden",
           boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(14, 165, 233, 0.2)",
           transition: "all 0.3s ease",
+          opacity: status === "Passive" ? 0.5 : 1,
+          pointerEvents: status === "Passive" ? "none" : "auto",
         }}
       >
         <input
           type="text"
-          ref={inputRef}
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
-          placeholder={status === "Passive" ? "Say 'Friday' to wake up your assistant..." : "Type your message..."}
-          disabled={status === "Passive"}
+          placeholder={status === "Passive" ? "Say 'Nexa' to wake me up..." : "Type your message..."}
+          ref={inputRef}
           style={{
             width: "100%",
-            background: "rgba(31, 41, 55, 0.7)",
-            color: "white",
-            padding: "0.85rem 3.5rem 0.85rem 1.25rem",
-            borderRadius: "0.75rem",
-            border: status !== "Passive" ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
-            outline: "none",
+            padding: "0.75rem 1rem",
+            paddingRight: "3rem",
+            background: "rgba(15, 23, 42, 0.3)",
             backdropFilter: "blur(10px)",
-            opacity: status === "Passive" ? 0.5 : 1,
-            cursor: status === "Passive" ? "not-allowed" : "text",
-            fontSize: "0.95rem",
-            transition: "all 0.3s ease",
+            border: "none",
+            outline: "none",
+            color: "white",
+            fontSize: "0.875rem",
           }}
+          disabled={status === "Passive"}
         />
         <button
           type="submit"
-          disabled={status === "Passive" || textInput.trim() === ""}
           style={{
             position: "absolute",
-            right: "0.75rem",
+            right: "0.5rem",
             top: "50%",
             transform: "translateY(-50%)",
             padding: "0.5rem",
-            borderRadius: "50%",
-            background: textInput.trim() !== "" ? "linear-gradient(135deg, #0ea5e9, #0284c7)" : "rgba(75, 85, 99, 0.5)",
+            background: "none",
             border: "none",
-            cursor: status === "Passive" || textInput.trim() === "" ? "not-allowed" : "pointer",
-            color: "white",
-            transition: "all 0.3s ease",
-            opacity: status === "Passive" || textInput.trim() === "" ? 0.5 : 1,
-            boxShadow:
-              textInput.trim() !== "" ? "0 4px 6px rgba(14, 165, 233, 0.3), 0 0 10px rgba(14, 165, 233, 0.2)" : "none",
+            cursor: status === "Passive" ? "not-allowed" : "pointer",
+            opacity: status === "Passive" ? 0.5 : 1,
           }}
+          disabled={status === "Passive"}
         >
-          <Send
-            style={{
-              width: "1rem",
-              height: "1rem",
-              transform: textInput.trim() !== "" ? "scale(1.1)" : "scale(1)",
-              transition: "transform 0.2s ease",
-            }}
-          />
+          <Send className="text-blue-400" size={20} />
         </button>
       </div>
     </form>

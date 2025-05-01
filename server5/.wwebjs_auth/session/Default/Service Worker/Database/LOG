@@ -1,3 +1,2 @@
-2025/04/25-21:35:44.915 4ae0 Reusing MANIFEST C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\.wwebjs_auth\session\Default\Service Worker\Database/MANIFEST-000001
-2025/04/25-21:35:44.916 4ae0 Recovering log #3
-2025/04/25-21:35:44.916 4ae0 Reusing old log C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\.wwebjs_auth\session\Default\Service Worker\Database/000003.log 
+2025/04/26-21:24:01.910 7998 Creating DB C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\.wwebjs_auth\session\Default\Service Worker\Database since it was missing.
+2025/04/26-21:24:01.914 7998 Reusing MANIFEST C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\.wwebjs_auth\session\Default\Service Worker\Database/MANIFEST-000001

@@ -9,7 +9,7 @@ import {
 const genAI = new GoogleGenerativeAI(Gemini_Api);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-1.5-pro",
 });
 
 const generationConfig = {
@@ -20,22 +20,54 @@ const generationConfig = {
   responseMimeType: "text/plain",
 };
 
-async function run(prompt) {
+async function run(prompt, history = []) {
   const chatSession = model.startChat({
     generationConfig,
-    history: [],
+    history: history || [],
   });
 
   // Instruct the model to reply concisely in 3–5 complete sentences
   const conditionedPrompt = `${prompt}\n\nPlease answer in 3 to 5 complete sentences. Be friendly and clear.`;
 
-  const result = await chatSession.sendMessage(conditionedPrompt);
-  const responseText = await result.response.text();
+  // Retry configuration
+  const maxRetries = 3;
+  const retryDelay = 2000; // 2 seconds
+  let lastError = null;
 
-  // Optional cleanup: Remove excessive whitespace and trim
-  const cleanedText = responseText.trim().replace(/\s+/g, ' ');
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await chatSession.sendMessage(conditionedPrompt);
+      const responseText = await result.response.text();
 
-  return cleanedText;
+      // Optional cleanup: Remove excessive whitespace and trim
+      const cleanedText = responseText.trim().replace(/\s+/g, ' ');
+
+      return cleanedText;
+    } catch (error) {
+      console.error(`Gemini API Error (Attempt ${attempt}/${maxRetries}):`, error);
+      lastError = error;
+
+      // If it's a 503 error and we haven't reached max retries, wait and try again
+      if ((error.message.includes('503') || error.message.includes('overloaded')) && attempt < maxRetries) {
+        console.log(`Retrying in ${retryDelay/1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        continue;
+      }
+
+      // Handle specific error cases
+      if (error.message.includes('503') || error.message.includes('overloaded')) {
+        return "I'm currently experiencing high demand. Please try again in a few moments.";
+      } else if (error.message.includes('429') || error.message.includes('quota')) {
+        return "I've reached my usage limit. Please try again later.";
+      } else {
+        return "I'm having trouble processing your request right now. Please try again later.";
+      }
+    }
+  }
+
+  // If we've exhausted all retries, return a friendly error message
+  console.error('All retry attempts failed:', lastError);
+  return "I'm having trouble processing your request right now. Please try again in a few minutes.";
 }
 
 export default run;

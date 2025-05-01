@@ -1,352 +1,207 @@
-import React, { createContext, useEffect, useState } from 'react';
-import run from '../GeminiApi';
+"use client"
 
-export const datacontext = createContext();
+import { createContext, useState, useCallback } from "react"
+import run from "../GeminiApi"
+import YoutubeAutomation from "../components/YoutubeAutomation"
+import { analyzeTextType, getDeepSeekResponse, formatCodeResponse, formatConversationHistory } from "../deepseekConfig"
 
-function VoiceContext({ children }) {
-  const [status, setStatus] = useState("Initializing");
-  const [isListening, setIsListening] = useState(false);
-  const [conversations, setConversations] = useState([]);
-  const [availableVoices, setAvailableVoices] = useState([]);
-  const [youtubeQuery, setYoutubeQuery] = useState("");
-  const [showYoutube, setShowYoutube] = useState(false);
+export const datacontext = createContext()
+
+function AIContext({ children }) {
+  const [conversations, setConversations] = useState([])
+  const [status, setStatus] = useState("Ready")
+  const [lastError, setLastError] = useState(null)
   const [sessionId, setSessionId] = useState(() => {
-    return `session-${Date.now()}`;
-  });
-  const [lastError, setLastError] = useState(null);
+    return `session-${Date.now()}`
+  })
+  const [youtubeQuery, setYoutubeQuery] = useState("")
+  const [showYoutube, setShowYoutube] = useState(false)
+  const [currentMode, setCurrentMode] = useState("normal")
+  const [isProcessing, setIsProcessing] = useState(false)
 
-  let wakeWordTriggered = false;
-
-  // Check browser support and initialize
-  useEffect(() => {
-    const checkSupport = () => {
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        setLastError("Speech recognition not supported in this browser");
-        setStatus("Error: Unsupported Browser");
-        return false;
-      }
-      return true;
-    };
-
-    const checkPermissions = async () => {
+  // Enhanced function to save chat to the backend
+  const saveChat = useCallback(
+    async (userMessage, aiResponse, sessionIdOverride) => {
       try {
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
-        if (permissionStatus.state === 'denied') {
-          setLastError("Microphone access denied. Please enable in browser settings.");
-          setStatus("Error: Mic Blocked");
-          return false;
+        await fetch("https://antler-4k4i.onrender.com/save-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: "guest",
+            session_id: sessionIdOverride || sessionId,
+            message: userMessage,
+            response: aiResponse,
+          }),
+        })
+      } catch (error) {
+        console.error("Error saving chat:", error)
+        setLastError("Failed to save chat")
+      }
+    },
+    [sessionId],
+  )
+
+  // Improved function to detect follow-up questions
+  const isFollowUp = useCallback(
+    (prompt) => {
+      if (!conversations.length) return false
+
+      // Enhanced follow-up detection with more patterns
+      const followUpPatterns = [
+        // Direct references
+        /\b(it|this|that|these|those|the code|the solution|the answer|the result)\b/i,
+        // Questions about previous content
+        /\b(explain|clarify|elaborate|tell me more about|what does|how does|why does)\b/i,
+        // Modifications to previous content
+        /\b(modify|change|update|improve|fix|refactor|optimize)\b/i,
+        // Continuations
+        /\b(continue|go on|proceed|next|more|another|additional)\b/i,
+        // Comparisons
+        /\b(instead|alternative|better way|different approach)\b/i,
+        // Short queries that likely refer to context
+        /^(how\?|why\?|what\?|explain\.?|continue\.?)$/i,
+      ]
+
+      // Check if any pattern matches
+      const isFollowUpQuery = followUpPatterns.some((pattern) => pattern.test(prompt))
+
+      // Also consider it a follow-up if in programming/logical mode and short query
+      const isShortQuery = prompt.split(" ").length <= 5
+
+      return isFollowUpQuery || ((currentMode === "programming" || currentMode === "logical") && isShortQuery)
+    },
+    [conversations, currentMode],
+  )
+
+  // Enhanced AI response function with better context handling
+  const aiResponse = useCallback(
+    async (prompt, sessionIdOverride) => {
+      // Prevent multiple simultaneous requests
+      if (isProcessing) return
+
+      setIsProcessing(true)
+      setStatus("Processing")
+      setConversations((prev) => [...prev, { type: "user", text: prompt }])
+      setConversations((prev) => [...prev, { type: "ai-thinking", text: "" }])
+      const useSessionId = sessionIdOverride || sessionId
+
+      // Handle YouTube commands
+      if (prompt.toLowerCase().includes("play")) {
+        const query = prompt.slice(prompt.toLowerCase().indexOf("play") + 5).trim()
+        if (query) {
+          setYoutubeQuery(query)
+          setShowYoutube(true)
+          setConversations((prev) => [
+            ...prev.slice(0, -1),
+            {
+              type: "ai",
+              text: `Playing "${query}" on YouTube`,
+              component: <YoutubeAutomation query={query} />,
+            },
+          ])
+          setStatus("Ready")
+          setIsProcessing(false)
+          return `Playing "${query}" on YouTube`
         }
-        return true;
-      } catch (e) {
-        console.warn("Permission API not supported, continuing anyway");
-        return true;
       }
-    };
 
-    const initialize = async () => {
-      const isSupported = checkSupport();
-      const hasPermission = await checkPermissions();
-      
-      if (isSupported && hasPermission) {
-        safeStart();
-        const welcomeMsg = "Nexa is now active. Say 'Nexa' to begin.";
-        setConversations([{ type: 'ai', text: welcomeMsg }]);
-        SpeakAi(welcomeMsg);
-        setStatus("Passive");
-      }
-    };
-
-    initialize();
-  }, []);
-
-  // Load available voices
-  useEffect(() => {
-    const handleVoicesChanged = () => {
-      const voices = window.speechSynthesis.getVoices();
-      setAvailableVoices(voices);
-      console.log("Available voices:", voices);
-    };
-
-    window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
-    handleVoicesChanged();
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);
-
-  function SpeakAi(text) {
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-IN';
-    utterance.pitch = 0.9;
-    utterance.rate = 1;
-
-    const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.includes('en'));
-    
-    if (englishVoice) {
-      utterance.voice = englishVoice;
-    }
-
-    utterance.onerror = (e) => {
-      console.error("Speech synthesis error:", e);
-      setLastError(`Speech error: ${e.error}`);
-    };
-
-    utterance.onend = () => {
-      if (status === "Speaking") {
-        setStatus("Listening");
-      }
-    };
-
-    setStatus("Speaking");
-    window.speechSynthesis.speak(utterance);
-  }
-
-  async function saveChat(userMessage, aiResponse) {
-    try {
-      await fetch('http://localhost:3000/save-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: 'guest',
-          session_id: sessionId,
-          message: userMessage,
-          response: aiResponse,
-        }),
-      });
-    } catch (error) {
-      console.error("Error saving chat:", error);
-      setLastError("Failed to save chat");
-    }
-  }
-
-  async function aiResponse(prompt) {
-    if (status === "Passive") {
-      setStatus("Awake");
-      setConversations(prev => [
-        ...prev,
-        { type: 'system', text: 'Nexa activated via text input' }
-      ]);
-    }
-
-    setStatus("Thinking...");
-    const newMessages = [{ type: 'user', text: prompt }];
-
-    if (prompt.toLowerCase().includes("sleep")) {
-      const sleepMsg = sleepResponses[Math.floor(Math.random() * sleepResponses.length)];
-      newMessages.push({ type: 'ai', text: sleepMsg });
-
-      setConversations(prev => [...prev, ...newMessages]);
-      SpeakAi(sleepMsg);
-      setStatus("Passive");
-      wakeWordTriggered = false;
-
-      await saveChat(prompt, sleepMsg);
-      return;
-    } else if (prompt.toLowerCase().includes("play")) {
-      const query = prompt.slice(prompt.toLowerCase().indexOf("play") + 5);
-      setYoutubeQuery(query);
-      setShowYoutube(true);
-      setConversations(prev => [
-        ...prev,
-        { type: 'user', text: prompt },
-        { type: 'system', text: `Playing ${query} on YouTube` },
-        { type: 'youtube', query: query }
-      ]);
-      return;
-    }
-
-    try {
-      const text = await run(prompt);
-      const cleaned = text.replace(/\*\*/g, '').replace(/\*/g, '').replace(/Google/gi, 'Nexa');
-
-      newMessages.push({ type: 'ai', text: cleaned });
-      setConversations(prev => [...prev, ...newMessages]);
-      SpeakAi(cleaned);
-      setStatus("Listening");
-
-      await saveChat(prompt, cleaned);
-    } catch (error) {
-      console.error("AI response error:", error);
-      setLastError("Failed to get AI response");
-      setStatus("Error");
-      const errorMsg = "Sorry, I encountered an error processing your request.";
-      setConversations(prev => [...prev, { type: 'ai', text: errorMsg }]);
-      SpeakAi(errorMsg);
-    }
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
-
-  recognition.continuous = true;
-  recognition.interimResults = false;
-  recognition.lang = 'en-IN';
-  recognition.maxAlternatives = 3; // Get more alternatives for better wake word detection
-
-  const greetResponses = [
-    "Yes, I'm here. What do you need?",
-    "Hello! How can I help you?",
-    "I'm ready and listening.",
-    "Hey, what's up?",
-    "At your service."
-  ];
-
-  const sleepResponses = [
-    "Alright, going to sleep now. Just say my name if you need me.",
-    "Okay, taking a nap. Say 'Nexa' to wake me up.",
-    "Going quiet now.",
-    "Sleeping. Call me if you need anything."
-  ];
-
-  recognition.onresult = (e) => {
-    const result = e.results[e.resultIndex];
-    const transcript = result[0].transcript.toLowerCase();
-    const alternatives = Array.from(result).map(alt => alt.transcript.toLowerCase());
-    
-    console.log("Heard:", transcript, "Alternatives:", alternatives);
-
-    const wakeWords = ["nexa", "next", "next up", "nexta", "nexus", "neck sa"];
-    const detectedWakeWord = alternatives.some(alt => 
-      wakeWords.some(word => alt.includes(word))
-    );
-
-    if (!wakeWordTriggered && detectedWakeWord) {
-      wakeWordTriggered = true;
-      setStatus("Awake");
-      const greeting = greetResponses[Math.floor(Math.random() * greetResponses.length)];
-      setConversations(prev => [
-        ...prev,
-        { type: 'system', text: `Wake word detected in: "${transcript}"` },
-        { type: 'ai', text: greeting }
-      ]);
-      SpeakAi(greeting);
-      return;
-    }
-
-    if (transcript.includes("play")) {
-      const query = transcript.slice(transcript.indexOf("play") + 5);
-      setYoutubeQuery(query);
-      setShowYoutube(true);
-      setConversations(prev => [
-        ...prev,
-        { type: 'user', text: transcript },
-        { type: 'system', text: `Playing ${query} on YouTube` },
-        { type: 'youtube', query: query }
-      ]);
-      return;
-    } else if (transcript.includes("sleep")) {
-      const sleepMsg = sleepResponses[Math.floor(Math.random() * sleepResponses.length)];
-      setConversations(prev => [
-        ...prev,
-        { type: 'user', text: transcript },
-        { type: 'ai', text: sleepMsg }
-      ]);
-      SpeakAi(sleepMsg);
-      setStatus("Passive");
-      wakeWordTriggered = false;
-    } else if (wakeWordTriggered || status === "Awake") {
-      aiResponse(transcript);
-    }
-  };
-
-  recognition.onerror = (e) => {
-    console.error("Recognition error:", e);
-    setLastError(`Recognition error: ${e.error}`);
-    
-    if (e.error === 'no-speech') {
-      setStatus("No speech detected");
-    } else if (e.error === 'audio-capture') {
-      setStatus("Error: No microphone");
-    } else if (e.error === 'not-allowed') {
-      setStatus("Error: Mic blocked");
-    } else {
-      setStatus("Error");
-    }
-    
-    setIsListening(false);
-    setTimeout(() => safeStart(), e.error === 'not-allowed' ? 5000 : 1000);
-  };
-
-  recognition.onend = () => {
-    console.log("Recognition ended");
-    setIsListening(false);
-    if (status !== "Error" && status !== "Passive") {
-      safeStart();
-    }
-  };
-
-  const safeStart = () => {
-    if (!isListening && status !== "Error") {
       try {
-        recognition.start();
-        setIsListening(true);
-        setStatus("Listening");
-      } catch (err) {
-        console.warn("Recognition start error:", err);
-        setTimeout(() => safeStart(), 1000);
+        // Analyze the incoming text
+        const analysis = analyzeTextType(prompt)
+        const isFollowUpQuery = isFollowUp(prompt)
+
+        // Prepare conversation history for context
+        let conversationHistory = []
+        if (isFollowUpQuery && conversations.length > 0) {
+          conversationHistory = formatConversationHistory(conversations)
+        }
+
+        if (analysis.shouldUseDeepSeek || isFollowUpQuery) {
+          // Handle with DeepSeek for code, logical questions, or follow-ups
+          const enhancedPrompt = prompt
+
+          // For follow-ups, provide more context
+          if (isFollowUpQuery && conversations.length > 0) {
+            // We don't need to modify the prompt as we're passing the conversation history
+          }
+
+          const response = await getDeepSeekResponse(enhancedPrompt, analysis, conversationHistory)
+
+          setCurrentMode(analysis.isProgramming ? "programming" : analysis.isLogical ? "logical" : "normal")
+          setConversations((prev) => [...prev.slice(0, -1), { type: "ai", text: response }])
+          setStatus("Ready")
+          await saveChat(prompt, response, useSessionId)
+          setIsProcessing(false)
+          return response
+        } else {
+          // Handle with Gemini for general conversation
+          const history = []
+          const filtered = conversations.filter((m) => m.type === "user" || m.type === "ai")
+          for (let i = 0; i < filtered.length; i += 2) {
+            const userMsg = filtered[i]
+            const aiMsg = filtered[i + 1]
+            if (userMsg && userMsg.type === "user") {
+              history.push({ role: "user", parts: [{ text: userMsg.text }] })
+            }
+            if (aiMsg && aiMsg.type === "ai") {
+              history.push({ role: "model", parts: [{ text: aiMsg.text }] })
+            }
+          }
+
+          history.push({ role: "user", parts: [{ text: prompt }] })
+          const text = await run(prompt, history)
+          const cleaned = text
+            .replace(/\*\*/g, "")
+            .replace(/\*/g, "")
+            .replace(/Google/gi, "Nexa")
+
+          // Check if the response contains code that should be formatted
+          const formattedResponse = formatCodeResponse(cleaned)
+
+          setCurrentMode("normal")
+          setConversations((prev) => [...prev.slice(0, -1), { type: "ai", text: formattedResponse }])
+          setStatus("Ready")
+          await saveChat(prompt, formattedResponse, useSessionId)
+          setIsProcessing(false)
+          return formattedResponse
+        }
+      } catch (error) {
+        console.error("AI response error:", error)
+        setLastError("Failed to get AI response")
+        setStatus("Error")
+        const errorMsg = "Sorry, I encountered an error processing your request."
+        setConversations((prev) => [...prev.slice(0, -1), { type: "ai", text: errorMsg }])
+        setIsProcessing(false)
+        return errorMsg
       }
-    }
-  };
+    },
+    [conversations, currentMode, isFollowUp, isProcessing, saveChat, sessionId],
+  )
 
-  const goToSleep = () => {
-    const sleepMsg = sleepResponses[Math.floor(Math.random() * sleepResponses.length)];
-    setConversations(prev => [
-      ...prev,
-      { type: 'system', text: 'Nexa going to sleep mode' },
-      { type: 'ai', text: sleepMsg }
-    ]);
-    SpeakAi(sleepMsg);
-    setStatus("Passive");
-    wakeWordTriggered = false;
-  };
-
-  const wakeUp = () => {
-    setStatus("Awake");
-    wakeWordTriggered = true;
-    const greeting = greetResponses[Math.floor(Math.random() * greetResponses.length)];
-    setConversations(prev => [
-      ...prev,
-      { type: 'system', text: 'Nexa manually activated' },
-      { type: 'ai', text: greeting }
-    ]);
-    SpeakAi(greeting);
-  };
-
-  const clearConversations = () => {
-    setConversations([]);
-    setSessionId(`session-${Date.now()}`);
-  };
+  const clearConversations = useCallback(() => {
+    setConversations([])
+    setSessionId(`session-${Date.now()}`)
+    setCurrentMode("normal")
+  }, [])
 
   const value = {
-    recognition,
-    SpeakAi,
     aiResponse,
     status,
-    safeStart,
     conversations,
     setConversations,
     clearConversations,
-    goToSleep,
-    wakeUp,
-    youtubeQuery,
-    showYoutube,
-    setShowYoutube,
     sessionId,
     setSessionId,
     lastError,
     setLastError,
-    isListening
-  };
+    youtubeQuery,
+    showYoutube,
+    setShowYoutube,
+    currentMode,
+    isProcessing,
+  }
 
-  return (
-    <datacontext.Provider value={value}>
-      {children}
-    </datacontext.Provider>
-  );
+  return <datacontext.Provider value={value}>{children}</datacontext.Provider>
 }
 
-export default VoiceContext;
+export default AIContext

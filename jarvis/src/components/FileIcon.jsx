@@ -13,82 +13,71 @@ export default function FileIcon({ toogleFileSummary }) {
     return () => clearInterval(animationInterval);
   }, []);
 
-  // Define animations in a style block
+  const pulseKeyframes = `
+    @keyframes filePulse {
+      0% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
+      50% { box-shadow: 0 0 30px rgba(37, 99, 235, 0.8); }
+      100% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
+    }
+  `;
+
   const floatKeyframes = `
-    @keyframes float {
+    @keyframes fileFloat {
       0% { transform: translateY(0px); }
       50% { transform: translateY(-10px); }
       100% { transform: translateY(0px); }
     }
   `;
 
-  const glowKeyframes = `
-    @keyframes glow {
-      0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-      50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
-      100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-    }
-  `;
-
-  const pulseKeyframes = `
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
-    }
-  `;
-
-  const buttonStyle = {
-    position: 'absolute',
-    bottom:'6rem',
+  const containerStyle = {
+    position: "fixed",
+    bottom: "6rem",
     right: "2rem",
-    width: "60px",
-    height: "60px",
-    padding: '1rem',
-    borderRadius: '9999px',
-    backgroundColor: '#2563eb',
-    color: 'white',
-    transition: 'all 300ms',
-    animation: 'float 3s ease-in-out infinite, glow 3s ease-in-out infinite',
-    transform: isAnimating ? 'translateY(0.25rem)' : '',
-    cursor: 'pointer',
-    border: 'none',
-  };
-
-  const buttonHoverStyle = {
-    backgroundColor: '#1d4ed8',
-    transform: 'scale(1.1)',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    width: "55px",
+    height: "55px",
+    borderRadius: "50%",
+    background: "#2563eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: 50,
+    boxShadow: "0 0 20px rgba(37, 99, 235, 0.5)",
+    border: "2px solid rgba(255, 255, 255, 0.2)",
+    transition: "all 0.3s ease",
+    animation: "filePulse 2s infinite, fileFloat 3s ease-in-out infinite",
+    transform: isAnimating ? "scale(1.1)" : "scale(1)"
   };
 
   const iconStyle = {
-    animation: 'pulse 2s infinite ease-in-out',
-    width: '20px',
-    height: '20px',
+    width: "28px",
+    height: "28px",
+    color: "white",
+    transition: "transform 0.3s ease"
   };
 
   return (
     <>
       <style>
-        {floatKeyframes}
-        {glowKeyframes}
         {pulseKeyframes}
+        {floatKeyframes}
       </style>
-      <button 
+      <div
+        className="file-icon-container"
+        style={containerStyle}
         onClick={toogleFileSummary}
-        style={buttonStyle}
-        onMouseOver={(e) => {
-          Object.assign(e.currentTarget.style, buttonHoverStyle);
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.1)";
+          e.currentTarget.style.boxShadow = "0 0 30px rgba(37, 99, 235, 0.8)";
         }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = buttonStyle.backgroundColor;
-          e.currentTarget.style.transform = isAnimating ? 'translateY(0.25rem)' : '';
-          e.currentTarget.style.boxShadow = '';
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = isAnimating ? "scale(1.1)" : "scale(1)";
+          e.currentTarget.style.boxShadow = "0 0 20px rgba(37, 99, 235, 0.5)";
         }}
-        aria-label="Open File Summarizer"
+        title="File Summarizer"
       >
         <UploadCloud style={iconStyle} />
-      </button>
+      </div>
     </>
   );
 }

@@ -29,15 +29,12 @@ function AnimationStyles() {
     }
     
     @keyframes glow {
-      0% { box-shadow: 0 0 5px rgba(14, 165, 233, 0.5); }
-      50% { box-shadow: 0 0 15px rgba(14, 165, 233, 0.8); }
-      100% { box-shadow: 0 0 5px rgba(14, 165, 233, 0.5); }
+      0% { box-shadow: 0 0 5px #2563eb; }
+      50% { box-shadow: 0 0 15px #38bdf8; }
+      100% { box-shadow: 0 0 5px #2563eb; }
     }
     
-    @keyframes rotate3d {
-      0% { transform: perspective(1000px) rotateY(0deg); }
-      100% { transform: perspective(1000px) rotateY(360deg); }
-    }
+  
     
     @keyframes blink {
       0%, 100% { opacity: 1; }
@@ -105,25 +102,10 @@ function AnimationStyles() {
       50% { opacity: 0.3; filter: blur(1px); }
       100% { opacity: 0.1; filter: blur(0px); }
     }
+
+  
     
-    @keyframes youtubeIconJump {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    @keyframes youtubeIconGlow {
-      0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.7)); }
-      50% { filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.9)); }
-    }
-    
-    .youtube-icon-container {
-      animation: youtubeIconJump 2s ease-in-out infinite, youtubeIconGlow 3s ease-in-out infinite;
-      transition: transform 0.3s ease;
-    }
-    
-    .youtube-icon-container:hover {
-      transform: scale(1.2);
-    }
+ 
     
     .ai-particle {
       position: fixed;
@@ -132,6 +114,8 @@ function AnimationStyles() {
       z-index: 0;
       
       filter: blur(1px);
+      background: #232323 !important;
+      border: 1.5px solid #2563eb !important;
     }
     
     .status-dot {
@@ -140,7 +124,7 @@ function AnimationStyles() {
       right: -0.25rem;
       width: 0.75rem;
       height: 0.75rem;
-      background-color: #22c55e;
+      background-color: #38bdf8;
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
@@ -149,28 +133,28 @@ function AnimationStyles() {
       max-width: 80%;
       border-radius: 1rem;
       padding: 0.5rem 1rem;
-      background: linear-gradient(135deg, #0ea5e9, #0284c7);
-      color: white;
+      background: #181818;
+      color: #e0e0e0;
       animation: fadeIn 0.3s ease-out;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px rgba(14, 165, 233, 0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
       transform-origin: bottom right;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid #2563eb;
+      backdrop-filter: blur(4px);
     }
     
     .message-bubble-ai {
       max-width: 80%;
       border-radius: 1rem;
       padding: 0.5rem 1rem;
-      background: linear-gradient(135deg, #374151, #1f2937);
-      color: white;
+      background: #232323;
+      color: #e0e0e0;
       animation: slideIn 0.3s ease-out;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px rgba(14, 165, 233, 0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       transform-origin: bottom left;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid #2563eb;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(4px);
     }
     
     .message-bubble-ai::after {
@@ -180,7 +164,7 @@ function AnimationStyles() {
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+      background: linear-gradient(90deg, transparent, #2563eb, transparent);
       animation: scanline 2s linear infinite;
       opacity: 0.5;
     }
@@ -189,125 +173,78 @@ function AnimationStyles() {
       max-width: 80%;
       border-radius: 1rem;
       padding: 0.5rem 1rem;
-      background: linear-gradient(135deg, #4b5563, #6b7280);
-      color: white;
+      background: #181818;
+      color: #b0b0b0;
       animation: fadeIn 0.3s ease-out;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
       margin: 0 auto;
       font-style: italic;
       opacity: 0.8;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid #2563eb;
+      backdrop-filter: blur(4px);
     }
     
     .header-container {
       animation: fadeIn 0.5s ease-out;
+      background: #131313 !important;
+      color: #e0e0e0 !important;
+      border-bottom: 1.5px solid #2563eb !important;
     }
     
     .app-title {
       animation: floatUp 3s ease-in-out infinite;
+      color: #e0e0e0 !important;
     }
     
     .control-button:hover {
       transform: scale(1.1);
       transition: transform 0.2s ease;
+      background: #232323 !important;
+      border: 1.5px solid #2563eb !important;
+      color: #e0e0e0 !important;
     }
     
     .processing-indicator {
       animation: pulse 1.5s infinite;
+      color: #2563eb !important;
     }
     
     .input-container {
       animation: glow 3s infinite;
+      background: #181818 !important;
+      border: 1.5px solid #2563eb !important;
+      color: #e0e0e0 !important;
     }
     
-    .robot-container {
-      animation: float 6s ease-in-out infinite;
-      transform-style: preserve-3d;
-      perspective: 1000px;
-    }
+   
     
-    .robot-eye {
-      animation: blink 3s infinite;
-    }
+   
     
-    .robot-mouth.speaking {
-      animation: zigzagSpeak 0.3s infinite;
-      height: 15px !important;
-    }
+
+   
+ 
+  
     
-    .robot-brain.thinking {
-      animation: thinking 1s infinite;
-    }
+ 
     
-    .robot-face.happy .robot-mouth {
-      border-radius: 0 0 100px 100px;
-    }
+
     
-    .robot-face.thinking .robot-eye::after {
-      content: '?';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-weight: bold;
-      color: #38bdf8;
-    }
+  
     
-    .robot-face.listening .robot-ear {
-      animation: listening 1s infinite;
-    }
+.background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  background: #131313 !important;  /* Dark background */
+}
+
     
-    .robot-face.waking-up {
-      animation: wakeUp 1s forwards;
-      transform-origin: center center;
-    }
-    
-    .robot-face.going-to-sleep {
-      animation: goToSleep 1s forwards;
-      transform-origin: center center;
-    }
-    
-    .robot-eye.active {
-      animation: eyeMovement 3s infinite;
-    }
-    
-    .background-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-    
-    .youtube-summarizer-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.3s ease-out;
-    }
-    
-    .youtube-summarizer-container {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 0, 0, 0.4);
-      border: 1px solid rgba(255, 0, 0, 0.3);
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: slideIn 0.3s ease-out;
-    }
+   
+ 
   `
     document.head.appendChild(styleElement)
 

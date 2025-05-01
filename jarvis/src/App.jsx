@@ -1,17 +1,16 @@
-
 import React from 'react';
 
 import { useState, useEffect } from "react"
 
 import LandingPage from "./components/LandingPage"
 import LoadingScreen from "./components/LoadingScreen"
-import YoutubeAutomation from "./components/YoutubeAutomation"
-import SeatMonitor from './components/SeatMonitor';
+import AIContext from './context/VoiceContext'
+
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  
   const userId = "guest"; // Replace with dynamic user if needed
 
   // Simulate app initialization
@@ -97,12 +96,9 @@ function App() {
   }
 
   return (
-      
+    <AIContext>
       <LandingPage initialized={isInitialized} />
-      // <div>
-      //   <YoutubeAutomation/>
-      // </div>
-    // <SeatMonitor/>
+    </AIContext>
   )
 }
 

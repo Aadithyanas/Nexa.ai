@@ -1,55 +1,36 @@
-"use client"
 import { useContext, useEffect, useState } from "react"
 import { datacontext } from "../context/VoiceContext"
 import Header from "./Header"
 import Robot from "./Robot"
 import ChatArea from "./ChatArea"
 import InputForm from "./InputForm"
-import YouTubeIcon from "./YoutubeIcon"
-import YouTubeSummarizerModal from "./YoutubeSummarizerModal"
 import BackgroundCanvas from "./BackgroundCanvas"
 import AnimationStyles from "./AnimationStyles"
 import FileIcon from "./FileIcon"
-import FileSummarizerModal from "./FileSummarizerModel"
+import FileSummarizerModal from "./FileSummarizerModal"
 import Sidebar from "./Sidebar"
-import SeatMonitor from "./SeatMonitor"
-import { FaChair } from "react-icons/fa" 
 
 function LandingPage() {
-  const { status } = useContext(datacontext)
-  const [showYouTubeSummarizer, setShowYouTubeSummarizer] = useState(false)
+  // Get context safely with fallback default values
+  const contextData = useContext(datacontext) || {};
+  const { status = "Ready" } = contextData;
+
   const [showFileSummary, setshowFileSummary] = useState(false)
-  const [showRobot, setShowRobot] = useState(true)
+  const [showRobot, setShowRobot] = useState(false)
   const [particleCount, setParticleCount] = useState(0)
   const [selectedSessionId, setSelectedSessionId] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isLoadingSession, setIsLoadingSession] = useState(false)
-  const [cameraActive, setCameraActive] = useState(true)
-  const [seatMonitorExpanded, setSeatMonitorExpanded] = useState(false) // New state for toggle
-  const userId = "guest"
 
-  // Toggle seat monitor view
-  const toggleSeatMonitor = () => {
-    setSeatMonitorExpanded(!seatMonitorExpanded)
-  }
+  const userId = "guest"
 
   // Toggle robot visibility
   const toggleRobot = () => {
     setShowRobot(!showRobot)
   }
 
-  // Toggle YouTube summarizer
-  const toggleYouTubeSummarizer = () => {
-    setShowYouTubeSummarizer(!showYouTubeSummarizer)
-  }
-
   const toogleFileSummary = () => {
     setshowFileSummary(!showFileSummary)
-  }
-
-  // Toggle camera on/off
-  const toggleCamera = () => {
-    setCameraActive(!cameraActive)
   }
 
   // Handle session selection
@@ -60,40 +41,14 @@ function LandingPage() {
     setSelectedSessionId(sessionId)
 
     // Create visual effect when selecting a session
-    const particleEffect = () => {
-      for (let i = 0; i < 5; i++) {
-        setTimeout(() => createSpecialParticle(), i * 100)
-      }
-    }
+  
 
-    particleEffect()
+   
     setIsLoadingSession(false)
   }
 
-  // Create a special particle for session selection
-  const createSpecialParticle = () => {
-    const particle = document.createElement("div")
-    particle.className = "ai-particle"
-
-    const size = Math.random() * 10 + 8
-    const x = 100 + Math.random() * 150
-    const y = Math.random() * window.innerHeight
-
-    particle.style.width = `${size}px`
-    particle.style.height = `${size}px`
-    particle.style.left = `${x}px`
-    particle.style.top = `${y}px`
-    particle.style.backgroundColor = `rgba(59, 130, 246, ${Math.random() * 0.5 + 0.3})`
-    particle.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.7)"
-
-    document.body.appendChild(particle)
-    setParticleCount((prev) => prev + 1)
-
-    setTimeout(() => {
-      document.body.removeChild(particle)
-      setParticleCount((prev) => prev - 1)
-    }, 2000)
-  }
+  // Add createSpecialParticle function
+  
 
   // Handle sidebar collapse state
   const handleSidebarCollapse = (collapsed) => {
@@ -101,117 +56,135 @@ function LandingPage() {
   }
 
   // Create floating particles
+  
+
+  // Add useEffect for responsive handling
   useEffect(() => {
-    const createParticle = () => {
-      if (particleCount >= 15) return
-
-      const particle = document.createElement("div")
-      particle.className = "ai-particle"
-
-      const size = Math.random() * 10 + 5
-      const x = Math.random() * window.innerWidth
-      const y = Math.random() * window.innerHeight
-      const hue = Math.random() * 60 + 180
-
-      particle.style.width = `${size}px`
-      particle.style.height = `${size}px`
-      particle.style.left = `${x}px`
-      particle.style.top = `${y}px`
-      particle.style.backgroundColor = `hsla(${hue}, 100%, 70%, 0.7)`
-
-      document.body.appendChild(particle)
-      setParticleCount((prev) => prev + 1)
-
-      setTimeout(() => {
-        document.body.removeChild(particle)
-        setParticleCount((prev) => prev - 1)
-      }, 5000)
-    }
-
-    const interval = setInterval(createParticle, 500)
-    return () => clearInterval(interval)
-  }, [particleCount])
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setSidebarCollapsed(true);
+      }
+    };
+    // Initial check
+    handleResize();
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 relative overflow-hidden">
+    <div
+      className="min-h-screen text-white relative overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('./Main.png')" }}
+    >
       <AnimationStyles />
       <BackgroundCanvas />
 
       {/* Sidebar Component */}
-      <Sidebar userId={userId} onSessionSelect={handleSessionSelect} onCollapse={handleSidebarCollapse} />
+      <Sidebar 
+        userId={userId} 
+        onSessionSelect={handleSessionSelect} 
+        onCollapse={handleSidebarCollapse} 
+        isCollapsed={sidebarCollapsed} 
+        setIsCollapsed={setSidebarCollapsed} 
+      />
 
-      {/* Seat Monitor - Now toggleable */}
-      {seatMonitorExpanded ? (
-        <div className="fixed top-4 right-4 z-20 w-[20rem] h-[25rem] shadow-2xl rounded-lg overflow-hidden border border-gray-700 transition-all duration-300">
-          <div className="bg-black rounded-lg overflow-hidden h-full">
-            <div className="flex justify-between items-center p-2 bg-black">
-              <h3 className="text-sm font-medium text-gray-200">Seat Monitor</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={toggleCamera}
-                  className={`text-xs px-2 py-1 rounded-full ${cameraActive ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"} transition-colors`}
-                >
-                  {cameraActive ? "Camera On" : "Camera Off"}
-                </button>
-                <button
-                  onClick={toggleSeatMonitor}
-                  className="text-xs px-2 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
-                >
-                  Minimize
-                </button>
+      {/* Main Content Area */}
+      <div
+        className={`
+          flex flex-col min-h-screen 
+          transition-all duration-300 ease-in-out 
+          ml-[var(--sidebar-collapsed-width)]
+          sm:ml-[var(--sidebar-collapsed-width)]
+          ${!sidebarCollapsed && 'sm:ml-[var(--sidebar-width)]'}
+        `}
+      >
+        {/* Header Container */}
+        <div className={`
+          fixed top-0 right-0 left-0 z-10 
+          transition-all duration-300 ease-in-out 
+          pl-[var(--sidebar-collapsed-width)]
+          sm:pl-[var(--sidebar-collapsed-width)]
+          ${!sidebarCollapsed && 'sm:pl-[var(--sidebar-width)]'}
+          bg-transparent
+        `}>
+          <div className="max-w-6xl mx-auto px-4 py-2">
+            <Header toggleRobot={toggleRobot} />
+          </div>
+        </div>
+
+        {/* Main Content Container */}
+        <div className="
+          flex-1 flex flex-col items-center 
+          mt-[var(--header-height)] px-4 
+          pb-[calc(var(--bottom-input-height)+2rem)]
+        ">
+          <div className={`
+            w-full transition-all duration-300 ease-in-out 
+            mx-auto
+            ${sidebarCollapsed ? 'max-w-4xl' : 'max-w-3xl'}
+            sm:px-6 lg:px-8
+          `}>
+            {showRobot && (
+              <div className="mb-4 animate-fadeIn">
+                <Robot />
               </div>
-            </div>
-            <div className="w-full h-[90%]">
-              <SeatMonitor miniMode={false} cameraActive={cameraActive} />
+            )}
+
+            {/* Loading indicator when switching sessions */}
+            {isLoadingSession ? (
+              <div className="flex-1 flex justify-center items-center py-8">
+                <div className="loading-spinner"></div>
+              </div>
+            ) : (
+              <div className="min-h-[calc(100vh-var(--header-height)-var(--bottom-input-height))]">
+                <ChatArea sessionId={selectedSessionId} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Fixed Input Form at Bottom */}
+        <div className="
+          fixed bottom-0 left-0 right-0 
+          bg-black/20 backdrop-blur-md 
+          transition-all duration-300 ease-in-out z-20
+          border-t border-white/10
+        ">
+          <div className={`
+            mx-auto px-4 py-4 
+            transition-all duration-300 ease-in-out
+            ml-[var(--sidebar-collapsed-width)]
+            sm:ml-[var(--sidebar-collapsed-width)]
+            ${!sidebarCollapsed && 'sm:pl-[var(--sidebar-width)]'}
+          `}>
+            <div className={`
+              mx-auto 
+              ${sidebarCollapsed ? 'max-w-4xl' : 'max-w-3xl'}
+              sm:px-6 lg:px-8
+            `}>
+              <InputForm sessionId={selectedSessionId} />
             </div>
           </div>
         </div>
-      ) : (
-        <div 
-          onClick={toggleSeatMonitor}
-          className="fixed top-4 right-4 z-20 w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700"
-          title="Seat Monitor"
-        >
-          <FaChair className="text-xl text-blue-400" />
+
+        {/* Floating Action Buttons */}
+        <div className="
+          fixed bottom-[calc(var(--bottom-input-height)+1rem)] right-4 
+          z-30 flex flex-col gap-3
+        ">
+          <div className="transition-all duration-300 hover:scale-110">
+            <FileIcon toogleFileSummary={toogleFileSummary} />
+          </div>
+        </div>
+      </div>
+
+      {showFileSummary && (
+        <div className="fixed inset-0 z-50">
+          <FileSummarizerModal onClose={toogleFileSummary} />
         </div>
       )}
-
-      {/* YouTube Summarizer Icon */}
-      <div className="fixed top-48 right-4 z-10 transition-all duration-300">
-        <YouTubeIcon toggleYouTubeSummarizer={toggleYouTubeSummarizer} />
-      </div>
-
-      {/* YouTube Summarizer Modal */}
-      {showYouTubeSummarizer && <YouTubeSummarizerModal onClose={toggleYouTubeSummarizer} />}
-
-      {/* File Icon */}
-      <div className="fixed bottom-4 right-4 z-10 transition-all duration-300">
-        <FileIcon toogleFileSummary={toogleFileSummary} />
-      </div>
-
-      {showFileSummary && <FileSummarizerModal onClose={toogleFileSummary} />}
-
-      <div
-        className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-2rem)] relative z-1 transition-all duration-300"
-        style={{
-          marginLeft: sidebarCollapsed ? "5rem" : "17rem",
-        }}
-      >
-        <Header toggleRobot={toggleRobot} toggleYouTubeSummarizer={toggleYouTubeSummarizer} />
-        {showRobot && <Robot />}
-
-        {/* Loading indicator when switching sessions */}
-        {isLoadingSession ? (
-          <div className="flex-1 flex justify-center items-center">
-            <div className="loading-spinner"></div>
-          </div>
-        ) : (
-          <>
-            <ChatArea sessionId={selectedSessionId} />
-            <InputForm sessionId={selectedSessionId} />
-          </>
-        )}
-      </div>
 
       <style jsx>{`
         .loading-spinner {
@@ -226,6 +199,15 @@ function LandingPage() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-in-out;
         }
       `}</style>
     </div>

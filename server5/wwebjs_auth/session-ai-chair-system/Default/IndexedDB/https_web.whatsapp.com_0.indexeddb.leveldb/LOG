@@ -1,0 +1,4 @@
+2025/04/25-22:53:14.920 47cc Reusing MANIFEST C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\wwebjs_auth\session-ai-chair-system\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/04/25-22:53:14.920 47cc Recovering log #179
+2025/04/25-22:53:14.922 47cc Reusing old log C:\Users\rak34\OneDrive\Desktop\voiceAi\server5\wwebjs_auth\session-ai-chair-system\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000179.log 
+2025/04/25-22:53:17.954 38c8 Manual compaction at level-0 from '\x00\x1b\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x1c\x00\x00\x00' @ 0 : 0; will stop at (end)
