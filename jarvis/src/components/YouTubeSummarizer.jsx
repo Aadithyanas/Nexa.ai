@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import React from 'react';
 import { jsPDF } from "jspdf";
+import { Youtube, X, Download, Languages } from "lucide-react";
 
 function YouTubeSummarizer({ onClose }) {
   const [videoUrl, setVideoUrl] = useState("");
@@ -31,14 +32,13 @@ function YouTubeSummarizer({ onClose }) {
         setDisplayedTranslation(prev => prev + translatedSummary[typingIndex]);
         setTypingIndex(typingIndex + 1);
         
-        // Scroll to the typing area periodically during typing
         if (typingIndex % 5 === 0 && translationRef.current) {
           translationRef.current.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'nearest'
           });
         }
-      }, 15); // Speed of typing animation
+      }, 15);
       
       return () => clearTimeout(timer);
     } else if (typingIndex >= translatedSummary.length && isTyping) {
@@ -142,319 +142,109 @@ function YouTubeSummarizer({ onClose }) {
   };
 
   return (
-    <div style={{ padding: "1.5rem", color: "white", position: "relative" }}>
-      <style>
-        {`
-          @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-          }
-          @keyframes scanline {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-          }
-          .typing-cursor {
-            display: inline-block;
-            width: 3px;
-            height: 18px;
-            background-color: #93c5fd;
-            margin-left: 2px;
-            animation: pulse 0.8s infinite;
-            vertical-align: middle;
-          }
-          .summary-container {
-            animation: fadeIn 0.5s ease-out;
-          }
-          .translation-container {
-            animation: fadeIn 0.5s ease-out;
-            scroll-margin-top: 20px;
-          }
-        `}
-      </style>
-
-      <h2
-        style={{
-          fontSize: "1.5rem",
-          fontWeight: "bold",
-          marginBottom: "1.5rem",
-          background: "linear-gradient(to right, #ff0000, #cc0000)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-        }}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ color: "#ff0000" }}
+    <div className="text-white">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="flex items-center gap-2">
+          <Youtube className="text-red-500 w-5 h-5 sm:w-6 sm:h-6" />
+          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent">
+            YouTube Video Summarizer
+          </h2>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1.5 sm:p-2 hover:bg-gray-700 rounded-full transition-colors"
         >
-          <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-          <path d="m10 15 5-3-5-3z" />
-        </svg>
-        YouTube Video Summarizer
-      </h2>
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
-        <input
-          type="text"
-          placeholder="Paste YouTube URL..."
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-          style={{
-            padding: "0.75rem 1rem",
-            borderRadius: "0.5rem",
-            background: "rgba(31, 41, 55, 0.7)",
-            border: "1px solid rgba(255, 0, 0, 0.3)",
-            color: "white",
-            width: "100%",
-            outline: "none",
-            transition: "all 0.3s ease",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            backdropFilter: "blur(10px)",
-          }}
-        />
-
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="Paste YouTube URL..."
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm sm:text-base"
+          />
           <button
             onClick={handleSummarize}
             disabled={loading}
-            style={{
-              padding: "0.75rem 1.5rem",
-              borderRadius: "0.5rem",
-              background: loading ? "rgba(156, 163, 175, 0.5)" : "linear-gradient(135deg, #ff0000, #cc0000)",
-              color: "white",
-              border: "none",
-              cursor: loading ? "not-allowed" : "pointer",
-              fontWeight: "500",
-              transition: "all 0.3s ease",
-              boxShadow: loading ? "none" : "0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px rgba(255, 0, 0, 0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: "140px",
-            }}
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             {loading ? (
               <>
-                <div className="spinner" style={{ marginRight: "8px" }}></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Summarizing...
               </>
             ) : (
               "Summarize"
             )}
           </button>
-
-          <select
-            value={selectedLang}
-            onChange={(e) => setSelectedLang(e.target.value)}
-            disabled={!summary}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "0.5rem",
-              background: "rgba(31, 41, 55, 0.7)",
-              color: "white",
-              border: "1px solid rgba(255, 0, 0, 0.3)",
-              cursor: summary ? "pointer" : "not-allowed",
-              opacity: summary ? 1 : 0.6,
-              transition: "opacity 0.3s ease",
-            }}
-          >
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="ta">Tamil</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="zh">Chinese</option>
-          </select>
-
-          <button
-            onClick={handleTranslate}
-            disabled={translateLoading || !summary}
-            style={{
-              padding: "0.6rem 1.25rem",
-              borderRadius: "0.5rem",
-              background: summary ? "linear-gradient(135deg, #6366f1, #4338ca)" : "rgba(99, 102, 241, 0.3)",
-              color: "white",
-              border: "none",
-              cursor: summary && !translateLoading ? "pointer" : "not-allowed",
-              fontWeight: "500",
-              boxShadow: summary ? "0 4px 6px rgba(0, 0, 0, 0.1)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: "120px",
-              transition: "all 0.3s ease",
-            }}
-          >
-            {translateLoading ? (
-              <>
-                <div className="spinner" style={{ marginRight: "8px" }}></div>
-                Translating...
-              </>
-            ) : (
-              "Translate"
-            )}
-          </button>
-
-          <button
-            onClick={onClose}
-            style={{
-              padding: "0.75rem 1.5rem",
-              borderRadius: "0.5rem",
-              background: "rgba(31, 41, 55, 0.7)",
-              color: "white",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              cursor: "pointer",
-              fontWeight: "500",
-              transition: "all 0.3s ease",
-            }}
-          >
-            Close
-          </button>
         </div>
-      </div>
 
-      {error && (
-        <div
-          style={{
-            color: "#ef4444",
-            padding: "0.75rem",
-            background: "rgba(239, 68, 68, 0.1)",
-            borderRadius: "0.5rem",
-            marginBottom: "1rem",
-            borderLeft: "3px solid #ef4444",
-            animation: "fadeIn 0.3s ease-out",
-          }}
-        >
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm sm:text-base">
+            {error}
+          </div>
+        )}
 
-      {summary && (
-        <div
-          ref={summaryContainerRef}
-          className="summary-container"
-          style={{
-            background: "rgba(31, 41, 55, 0.7)",
-            padding: "1.25rem",
-            borderRadius: "0.75rem",
-            border: "1px solid rgba(255, 0, 0, 0.2)",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px rgba(255, 0, 0, 0.1)",
-            position: "relative",
-            overflow: "hidden",
-            scrollMarginTop: "20px",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: "1.25rem",
-              fontWeight: "bold",
-              marginBottom: "0.75rem",
-              color: "#f87171",
-            }}
-          >
-            Video Summary
-          </h3>
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: "2px",
-              background: "linear-gradient(90deg, transparent, #ff0000, transparent)",
-              animation: "scanline 2s linear infinite",
-              opacity: 0.5,
-            }}
-          ></div>
-          <p style={{ lineHeight: "1.6", fontSize: "0.95rem" }}>{summary}</p>
-
-          {translatedSummary && (
-            <div 
-              ref={translationRef} 
-              className="translation-container"
-              style={{ marginTop: "1rem" }}
-            >
-              <h4 style={{ color: "#93c5fd", marginBottom: "0.5rem" }}>
-                Translated Summary ({selectedLang.toUpperCase()}):
-              </h4>
-              <p style={{ lineHeight: "1.6", fontSize: "0.95rem" }}>
-                {displayedTranslation}
-                {isTyping && <span className="typing-cursor"></span>}
-              </p>
+        {summary && (
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-800 rounded-lg">
+              <h3 className="text-base sm:text-lg font-semibold mb-2 text-red-400">Video Summary</h3>
+              <p className="text-gray-300 text-sm sm:text-base">{summary}</p>
             </div>
-          )}
 
-          <button
-            onClick={handleDownloadPDF}
-            style={{
-              marginTop: "1rem",
-              padding: "0.6rem 1.25rem",
-              borderRadius: "0.5rem",
-              background: "linear-gradient(135deg, #10b981, #059669)",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "500",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-              transition: "background 0.3s ease",
-            }}
-          >
-            Download as PDF
-          </button>
-        </div>
-      )}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <select
+                value={selectedLang}
+                onChange={(e) => setSelectedLang(e.target.value)}
+                className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm sm:text-base"
+              >
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="ta">Tamil</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="zh">Chinese</option>
+              </select>
 
-      <button
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          top: "1rem",
-          right: "1rem",
-          background: "transparent",
-          border: "none",
-          color: "white",
-          fontSize: "1.5rem",
-          cursor: "pointer",
-          width: "2rem",
-          height: "2rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: "50%",
-          transition: "all 0.2s ease",
-        }}
-        title="Close"
-      >
-        ×
-      </button>
+              <button
+                onClick={handleTranslate}
+                disabled={translateLoading}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <Languages className="w-4 h-4 sm:w-5 sm:h-5" />
+                {translateLoading ? "Translating..." : "Translate"}
+              </button>
+
+              <button
+                onClick={handleDownloadPDF}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                Download PDF
+              </button>
+            </div>
+
+            {translatedSummary && (
+              <div ref={translationRef} className="p-4 bg-gray-800 rounded-lg">
+                <h3 className="text-base sm:text-lg font-semibold mb-2 text-blue-400">
+                  Translated Summary ({selectedLang.toUpperCase()})
+                </h3>
+                <p className="text-gray-300 text-sm sm:text-base">
+                  {displayedTranslation}
+                  {isTyping && (
+                    <span className="inline-block w-0.5 h-4 bg-blue-500 ml-1 animate-pulse"></span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
