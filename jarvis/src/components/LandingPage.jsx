@@ -8,13 +8,15 @@ import BackgroundCanvas from "./BackgroundCanvas"
 import AnimationStyles from "./AnimationStyles"
 import FileIcon from "./FileIcon"
 import FileSummarizerModal from "./FileSummarizerModal"
+import YouTubeIcon from "./YouTubeIcon"
+import YouTubeSummarizerModal from "./YouTubeSummarizerModal"
 import Sidebar from "./Sidebar"
 
 function LandingPage() {
   // Get context safely with fallback default values
   const contextData = useContext(datacontext) || {};
   const { status = "Ready" } = contextData;
-
+  const [showYouTubeSummarizer, setShowYouTubeSummarizer] = useState(false)
   const [showFileSummary, setshowFileSummary] = useState(false)
   const [showRobot, setShowRobot] = useState(false)
   const [particleCount, setParticleCount] = useState(0)
@@ -33,6 +35,10 @@ function LandingPage() {
     setshowFileSummary(!showFileSummary)
   }
 
+  const toggleYouTubeSummarizer = () => {
+    setShowYouTubeSummarizer(!showYouTubeSummarizer)
+  }
+
   // Handle session selection
   const handleSessionSelect = async (sessionId) => {
     if (sessionId === selectedSessionId) return // Skip if same session
@@ -40,14 +46,12 @@ function LandingPage() {
     setIsLoadingSession(true)
     setSelectedSessionId(sessionId)
 
-    // Create visual effect when selecting a session
+    
   
 
    
     setIsLoadingSession(false)
   }
-
-  // Add createSpecialParticle function
   
 
   // Handle sidebar collapse state
@@ -55,10 +59,7 @@ function LandingPage() {
     setSidebarCollapsed(collapsed)
   }
 
-  // Create floating particles
   
-
-  // Add useEffect for responsive handling
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
@@ -175,8 +176,12 @@ function LandingPage() {
           z-30 flex flex-col gap-3
         ">
           <div className="transition-all duration-300 hover:scale-110">
-            <FileIcon toogleFileSummary={toogleFileSummary} />
+            <FileIcon 
+              toogleFileSummary={toogleFileSummary} 
+              toggleYouTubeSummarizer={toggleYouTubeSummarizer} 
+            />
           </div>
+          
         </div>
       </div>
 
@@ -185,6 +190,16 @@ function LandingPage() {
           <FileSummarizerModal onClose={toogleFileSummary} />
         </div>
       )}
+
+
+ 
+       {/* YouTube Summarizer Modal */}
+       {showYouTubeSummarizer &&(
+         <div className="fixed inset-0 z-50">
+        <YouTubeSummarizerModal onClose={toggleYouTubeSummarizer} />
+        </div>
+      )}
+    
 
       <style jsx>{`
         .loading-spinner {
