@@ -12,7 +12,7 @@ const app = express();
 const PORT = 5000;
 
 app.use(cors({
-  origin: 'https://nexa-ai-beta.vercel.app', // or "*" for all origins (not recommended for production)
+  origin:  'https://nexa-ai-git-main-aadithyanas-projects.vercel.app/', // or "*" for all origins (not recommended for production)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
