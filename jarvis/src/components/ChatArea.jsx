@@ -22,16 +22,23 @@ function ChatArea({ sessionId }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const chatEndRef = useRef(null)
+  const [isNewChat, setIsNewChat] = useState(true)
+
+  useEffect(() => {
+    setIsNewChat(!sessionId)
+  }, [sessionId])
 
   useEffect(() => {
     const fetchSessionMessages = async () => {
       if (!sessionId) {
         setConversations([])
+        setIsNewChat(true)
         return
       }
 
       setIsLoading(true)
       setError(null)
+      setIsNewChat(false)
 
       try {
         const response = await fetch(`https://antler-4k4i.onrender.com/session/${sessionId}`)
@@ -97,6 +104,7 @@ function ChatArea({ sessionId }) {
               sessionId={sessionId}
               index={idx}
               isLatestMessage={idx === conversations.length - 1}
+              isNewChat={isNewChat}
             />
           ),
         )

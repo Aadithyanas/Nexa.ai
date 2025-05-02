@@ -212,12 +212,13 @@ const parseMessageContent = (text) => {
   return parts
 }
 
-const Message = memo(({ msg, sessionId, index, isLatestMessage }) => {
+const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [displayedText, setDisplayedText] = useState("")
   const [parsedContent, setParsedContent] = useState([])
-  const [isFullyTyped, setIsFullyTyped] = useState(true)
+  const [isTyping, setIsTyping] = useState(false)
   const messageRef = useRef(null)
+  const typingSpeed = 30 // milliseconds per character
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -240,11 +241,34 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage }) => {
     }
   }, [])
 
-  // Parse message content when the message text changes
+  // Typing animation effect for new AI messages
   useEffect(() => {
-    setParsedContent(parseMessageContent(msg.text))
-    setDisplayedText(msg.text)
-  }, [msg.text])
+    if (msg.type === "ai" && isLatestMessage && isNewChat) {
+      setIsTyping(true)
+      setDisplayedText("")
+      let currentText = ""
+      const textToType = msg.text
+      let currentIndex = 0
+
+      const typeNextCharacter = () => {
+        if (currentIndex < textToType.length) {
+          currentText += textToType[currentIndex]
+          setDisplayedText(currentText)
+          currentIndex++
+          setTimeout(typeNextCharacter, typingSpeed)
+        } else {
+          setIsTyping(false)
+          setParsedContent(parseMessageContent(textToType))
+        }
+      }
+
+      typeNextCharacter()
+    } else {
+      setDisplayedText(msg.text)
+      setParsedContent(parseMessageContent(msg.text))
+      setIsTyping(false)
+    }
+  }, [msg.text, msg.type, isLatestMessage, isNewChat])
 
   // Speak handler for AI responses
   const handleSpeak = () => {
@@ -283,9 +307,12 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage }) => {
           {msg.type === "user" ? "You" : msg.type === "system" ? "System" : "Nexa"}
         </p>
 
-        {/* Render message content */}
-        {msg.type === "ai" && !isFullyTyped ? (
-          <p className="whitespace-pre-line">{displayedText}</p>
+        {/* Render message content with typing animation for AI responses */}
+        {msg.type === "ai" && isLatestMessage && isTyping ? (
+          <div className="message-content">
+            <p className="whitespace-pre-line">{displayedText}</p>
+            <span className="typing-cursor"></span>
+          </div>
         ) : (
           <div className="message-content">
             {parsedContent.map((part, i) =>
@@ -304,10 +331,10 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage }) => {
         {msg.component && <div className="message-component-wrapper mt-2">{msg.component}</div>}
 
         {/* Speak icon for AI responses */}
-        {msg.type === "ai" && (
+        {msg.type === "ai" && !isTyping && (
           <button
             onClick={handleSpeak}
-            className="absolute bottom-2 right-2 p-1 rounded-full bg-gray-800 hover:bg-blue-600 transition-colors"
+            className="absolute bottom-2 right-2 p-1 rounded-full bg-transparent hover:bg-blue-600/10 transition-colors"
             title="Speak this response"
             style={{ lineHeight: 0 }}
           >
@@ -316,6 +343,23 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage }) => {
         )}
       </div>
       {msg.type === "user" && <UserRobot isVisible={isVisible} animate={isLatestMessage} />}
+
+      <style jsx>{`
+        .typing-cursor {
+          display: inline-block;
+          width: 2px;
+          height: 1.2em;
+          background-color: #3b82f6;
+          margin-left: 2px;
+          vertical-align: middle;
+          animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
     </div>
   )
 })

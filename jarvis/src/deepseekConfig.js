@@ -1,6 +1,7 @@
 import axios from "axios"
 
-const OPENROUTER_API_KEY = "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"
+// Your OpenRouter API key
+const OPENROUTER_API_KEY = "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"
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 // Enhanced text analysis with more patterns and keywords
