@@ -90,7 +90,7 @@ function YouTubeSummarizer({ onClose }) {
     }
   
     try {
-      const response = await fetch("http://localhost:5000/summarize", {
+      const response = await fetch("https://nexa-ai.onrender.com/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId }),
@@ -121,7 +121,7 @@ function YouTubeSummarizer({ onClose }) {
     setTypingIndex(0);
 
     try {
-      const response = await fetch("http://localhost:5000/translate/translate", {
+      const response = await fetch("https://nexa-ai.onrender.com/translate/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: summary, targetLang: selectedLang }),
