@@ -167,9 +167,15 @@ const AIRobot = memo(({ isVisible, animate }) => {
   )
 })
 
-// Function to parse message text and extract code blocks
+// Enhanced function to parse message text and extract code blocks, headings, and other formatted content
 const parseMessageContent = (text) => {
-  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g
+  // Improved regex for code blocks that handles various formats
+  // This regex matches:
+  // 1. Triple backtick blocks with or without language specification
+  // 2. Code blocks that use indentation instead of backticks
+  // 3. Handles whitespace variations
+  const codeBlockRegex = /```(\w*)\s*\n([\s\S]*?)```|`{3}\s*(\w*)\s*\n([\s\S]*?)`{3}/g
+
   const parts = []
   let lastIndex = 0
   let match
@@ -183,11 +189,15 @@ const parseMessageContent = (text) => {
       })
     }
 
-    // Add code block
+    // Determine language and content from the match groups
+    const language = match[1] || match[3] || "javascript"
+    const content = match[2] || match[4] || ""
+
+    // Add code block with proper language and trimmed content
     parts.push({
       type: "code",
-      language: match[1] || "javascript",
-      content: match[2],
+      language: language.trim(),
+      content: content.trim(),
     })
 
     lastIndex = match.index + match[0].length
@@ -212,13 +222,96 @@ const parseMessageContent = (text) => {
   return parts
 }
 
+// Component to render formatted text with headings, lists, etc.
+const FormattedText = ({ content }) => {
+  // Process headings (# Heading, ## Subheading, etc.)
+  const processedContent = content
+    // Process headings
+    .replace(/^# (.*?)$/gm, '<h1 class="text-xl font-bold text-blue-400 mt-4 mb-2">$1</h1>')
+    .replace(/^## (.*?)$/gm, '<h2 class="text-lg font-bold text-blue-300 mt-3 mb-2">$1</h2>')
+    .replace(/^### (.*?)$/gm, '<h3 class="text-md font-bold text-blue-200 mt-2 mb-1">$1</h3>')
+    .replace(/^#### (.*?)$/gm, '<h4 class="text-base font-semibold text-gray-200 mt-2 mb-1">$1</h4>')
+    .replace(/^##### (.*?)$/gm, '<h5 class="text-sm font-semibold text-gray-300 mt-1 mb-1">$1</h5>')
+    .replace(/^###### (.*?)$/gm, '<h6 class="text-xs font-semibold text-gray-400 mt-1 mb-1">$1</h6>')
+
+    // Process bold and italic
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+
+    // Process unordered lists
+    .replace(/^- (.*?)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    .replace(/^• (.*?)$/gm, '<li class="ml-4 list-disc">$1</li>')
+
+    // Process ordered lists
+    .replace(/^(\d+)\. (.*?)$/gm, '<li class="ml-4 list-decimal">$2</li>')
+
+    // Process links
+    .replace(
+      /\[(.*?)\]$$(.*?)$$/g,
+      '<a href="$2" class="text-blue-400 underline" target="_blank" rel="noopener noreferrer">$1</a>',
+    )
+
+    // Process horizontal rules
+    .replace(/^---$/gm, '<hr class="my-4 border-gray-600" />')
+
+    // Process blockquotes
+    .replace(
+      /^> (.*?)$/gm,
+      '<blockquote class="pl-4 border-l-4 border-blue-500 text-gray-400 italic my-2">$1</blockquote>',
+    )
+
+  // Split by newlines and wrap paragraphs
+  const lines = processedContent.split("\n")
+  let inList = false
+  const formattedLines = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // Check if line is a list item
+    if (line.includes('<li class="')) {
+      if (!inList) {
+        // Start a new list
+        formattedLines.push('<ul class="my-2">')
+        inList = true
+      }
+      formattedLines.push(line)
+    } else {
+      // Close list if we were in one
+      if (inList) {
+        formattedLines.push("</ul>")
+        inList = false
+      }
+
+      // Skip empty lines
+      if (line.trim() === "") {
+        formattedLines.push("<br />")
+        continue
+      }
+
+      // If line is not already a formatted element (heading, etc.), wrap it in a paragraph
+      if (!line.startsWith("<h") && !line.startsWith("<blockquote") && !line.startsWith("<hr")) {
+        formattedLines.push(`<p class="my-2">${line}</p>`)
+      } else {
+        formattedLines.push(line)
+      }
+    }
+  }
+
+  // Close list if we're still in one at the end
+  if (inList) {
+    formattedLines.push("</ul>")
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: formattedLines.join("") }} />
+}
+
 const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [displayedText, setDisplayedText] = useState("")
   const [parsedContent, setParsedContent] = useState([])
-  const [isTyping, setIsTyping] = useState(false)
+  const [isFullyTyped, setIsFullyTyped] = useState(false)
   const messageRef = useRef(null)
-  const typingSpeed = 30 // milliseconds per character
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -241,34 +334,35 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => 
     }
   }, [])
 
-  // Typing animation effect for new AI messages
+  // Parse message content when the message text changes or when typing is complete
   useEffect(() => {
-    if (msg.type === "ai" && isLatestMessage && isNewChat) {
-      setIsTyping(true)
+    if (msg.type === "ai" && isFullyTyped) {
+      setParsedContent(parseMessageContent(msg.text))
+    } else if (msg.type !== "ai") {
+      setParsedContent(parseMessageContent(msg.text))
+    }
+  }, [msg.text, isFullyTyped, msg.type])
+
+  // Typing animation only for new live AI responses (not for history)
+  useEffect(() => {
+    if (msg.type === "ai" && isLatestMessage && isVisible && isNewChat) {
       setDisplayedText("")
-      let currentText = ""
-      const textToType = msg.text
-      let currentIndex = 0
-
-      const typeNextCharacter = () => {
-        if (currentIndex < textToType.length) {
-          currentText += textToType[currentIndex]
-          setDisplayedText(currentText)
-          currentIndex++
-          setTimeout(typeNextCharacter, typingSpeed)
-        } else {
-          setIsTyping(false)
-          setParsedContent(parseMessageContent(textToType))
+      setIsFullyTyped(false)
+      let i = 0
+      const interval = setInterval(() => {
+        setDisplayedText(msg.text.slice(0, i + 1))
+        i++
+        if (i >= msg.text.length) {
+          clearInterval(interval)
+          setIsFullyTyped(true)
         }
-      }
-
-      typeNextCharacter()
+      }, 15) // Faster typing speed (ms per character)
+      return () => clearInterval(interval)
     } else {
       setDisplayedText(msg.text)
-      setParsedContent(parseMessageContent(msg.text))
-      setIsTyping(false)
+      setIsFullyTyped(true)
     }
-  }, [msg.text, msg.type, isLatestMessage, isNewChat])
+  }, [msg.text, msg.type, isLatestMessage, isVisible, isNewChat])
 
   // Speak handler for AI responses
   const handleSpeak = () => {
@@ -282,8 +376,8 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => 
   // Tailwind bubble classes - Modified for black background, white text, and blue borders
   const baseBubble =
     "px-4 py-3 rounded-2xl shadow-md text-sm font-medium transition-all duration-300 max-w-[80%] break-words border border-blue-500"
-  const userBubble = baseBubble + " bg-transparent backdrop-blur-md text-gray-200 ml-auto rounded-br-md animate-fade-in"
-  const aiBubble = baseBubble + " bg-transparent backdrop-blur-md text-gray-200 mr-auto rounded-bl-md animate-fade-in"
+  const userBubble = baseBubble + " bg-gray-900 text-gray-200 ml-auto rounded-br-md animate-fade-in"
+  const aiBubble = baseBubble + " bg-gray-900 text-gray-200 mr-auto rounded-bl-md animate-fade-in"
   const systemBubble = baseBubble + " bg-gray-600 text-gray-200 mx-auto text-center animate-fade-in"
 
   return (
@@ -307,19 +401,14 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => 
           {msg.type === "user" ? "You" : msg.type === "system" ? "System" : "Nexa"}
         </p>
 
-        {/* Render message content with typing animation for AI responses */}
-        {msg.type === "ai" && isLatestMessage && isTyping ? (
-          <div className="message-content">
-            <p className="whitespace-pre-line">{displayedText}</p>
-            <span className="typing-cursor"></span>
-          </div>
+        {/* Render message content */}
+        {msg.type === "ai" && !isFullyTyped ? (
+          <div className="whitespace-pre-line">{displayedText}</div>
         ) : (
           <div className="message-content">
             {parsedContent.map((part, i) =>
               part.type === "text" ? (
-                <p key={i} className="whitespace-pre-line mb-2">
-                  {part.content}
-                </p>
+                <FormattedText key={i} content={part.content} />
               ) : (
                 <CodeBlock key={i} code={part.content} language={part.language} />
               ),
@@ -331,10 +420,10 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => 
         {msg.component && <div className="message-component-wrapper mt-2">{msg.component}</div>}
 
         {/* Speak icon for AI responses */}
-        {msg.type === "ai" && !isTyping && (
+        {msg.type === "ai" && (
           <button
             onClick={handleSpeak}
-            className="absolute bottom-2 right-2 p-1 rounded-full bg-transparent hover:bg-blue-600/10 transition-colors"
+            className="absolute bottom-2 right-2 p-1 rounded-full bg-gray-800 hover:bg-blue-600 transition-colors"
             title="Speak this response"
             style={{ lineHeight: 0 }}
           >
@@ -343,23 +432,6 @@ const Message = memo(({ msg, sessionId, index, isLatestMessage, isNewChat }) => 
         )}
       </div>
       {msg.type === "user" && <UserRobot isVisible={isVisible} animate={isLatestMessage} />}
-
-      <style jsx>{`
-        .typing-cursor {
-          display: inline-block;
-          width: 2px;
-          height: 1.2em;
-          background-color: #3b82f6;
-          margin-left: 2px;
-          vertical-align: middle;
-          animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
     </div>
   )
 })

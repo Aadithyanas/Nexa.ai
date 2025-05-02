@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FaCopy, FaCheck } from "react-icons/fa"
 import Prism from "prismjs"
 import "prismjs/themes/prism-tomorrow.css"
@@ -26,13 +26,30 @@ const loadPrismLanguage = (language) => {
 
 const CodeBlock = ({ code, language }) => {
   const [copied, setCopied] = useState(false)
+  const [formattedCode, setFormattedCode] = useState("")
 
   // Determine language or use fallback
   const lang = language || "javascript"
-  loadPrismLanguage(lang)
 
-  // Format code with Prism
-  const formattedCode = Prism.highlight(code, Prism.languages[lang] || Prism.languages.javascript, lang)
+  // Format code with Prism when component mounts or code/language changes
+  useEffect(() => {
+    loadPrismLanguage(lang)
+
+    // Ensure code is a string
+    const codeStr = typeof code === "string" ? code : String(code)
+
+    // Clean up the code - remove extra whitespace at start/end
+    const cleanCode = codeStr.trim()
+
+    // Format the code with Prism
+    try {
+      const highlighted = Prism.highlight(cleanCode, Prism.languages[lang] || Prism.languages.javascript, lang)
+      setFormattedCode(highlighted)
+    } catch (error) {
+      console.error("Error highlighting code:", error)
+      setFormattedCode(cleanCode)
+    }
+  }, [code, lang])
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code)

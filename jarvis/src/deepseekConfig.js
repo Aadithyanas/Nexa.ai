@@ -1,7 +1,6 @@
 import axios from "axios"
 
-// Your OpenRouter API key
-const OPENROUTER_API_KEY = "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"
+const OPENROUTER_API_KEY = "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"
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 // Enhanced text analysis with more patterns and keywords
@@ -211,14 +210,18 @@ export const enhancePrompt = (prompt, type, conversationContext = []) => {
         4. Explain any technical concepts used
         5. Use proper formatting for code and technical terms
         6. Always wrap code in \`\`\`javascript (or appropriate language) code blocks
-        7. Keep explanations concise but thorough`
+        7. Use proper Markdown formatting for headings (# for main headings, ## for subheadings)
+        8. Keep explanations concise but thorough`
   } else if (type.isLogical) {
     systemPrompt = `You are a logical problem-solving assistant. Please provide a detailed solution for the following request.
         Include step-by-step explanation, mathematical formulas if applicable, and clear reasoning.
-        Format any code or mathematical expressions in appropriate code blocks.`
+        Format any code or mathematical expressions in appropriate code blocks.
+        Use proper Markdown formatting for headings (# for main headings, ## for subheadings).`
   } else {
     systemPrompt = `You are Nexa, a helpful AI assistant. Provide clear, concise, and accurate responses.
-        If your response includes code, always format it in proper code blocks with syntax highlighting.`
+        If your response includes code, always format it in proper code blocks with syntax highlighting.
+        Use proper Markdown formatting for headings (# for main headings, ## for subheadings).
+        Structure your responses with clear sections and bullet points where appropriate.`
   }
 
   // Add conversation context if available

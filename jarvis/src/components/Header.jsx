@@ -33,7 +33,7 @@ function Header() {
         </svg>
       </div>
       <span className="text-2xl font-bold" style={{ color: 'black' }}>Nexa</span>
-      <span className="text-base font-medium mt-1 text-gray-400 hidden sm:block">
+      <span className="text-base font-medium mt-1 text-gray-200 hidden sm:block">
         Hi, I'm Nexa – Your Assistant
       </span>
 

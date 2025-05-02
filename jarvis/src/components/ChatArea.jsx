@@ -3,6 +3,7 @@
 import { useContext, useRef, useEffect, useState, memo } from "react"
 import { datacontext } from "../context/VoiceContext"
 import Message from "./Message"
+import "../styles/chat.css" // Import the CSS
 
 const TypingBubble = () => (
   <div className="flex items-end mb-2 justify-start">
@@ -23,10 +24,6 @@ function ChatArea({ sessionId }) {
   const [error, setError] = useState(null)
   const chatEndRef = useRef(null)
   const [isNewChat, setIsNewChat] = useState(true)
-
-  useEffect(() => {
-    setIsNewChat(!sessionId)
-  }, [sessionId])
 
   useEffect(() => {
     const fetchSessionMessages = async () => {
