@@ -16,6 +16,14 @@ export const summarizeVideo = async (req, res) => {
     res.json({ summary });
   } catch (error) {
     console.error("Summarization failed:", error);
+    if (
+      error.name === "YoutubeTranscriptDisabledError" ||
+      (error.message && error.message.includes("Transcript is disabled"))
+    ) {
+      return res.status(400).json({
+        error: "Transcripts are disabled for this video. Summarization is not possible."
+      });
+    }
     res.status(500).json({ error: "Failed to summarize video." });
   }
 };
