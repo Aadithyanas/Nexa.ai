@@ -47,33 +47,55 @@ ${text}
  * @param {string} mimeType - MIME type of image
  * @returns {Promise<string>} - Extracted and summarized content
  */
-async function summarizeImageWithGemini(imagePath, mimeType = "image/png") {
+async function summarizeImageWithGemini(imagePath, mimeType = null) {
   try {
-    const model = getGeminiModel("gemini-1.5-pro")
+    // Determine MIME type from file extension if not provided
+    if (!mimeType) {
+      const extension = imagePath.split('.').pop().toLowerCase();
+      mimeType = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+        webp: 'image/webp'
+      }[extension] || 'image/jpeg'; // default to jpeg if unknown
+    }
 
-    console.log(`Reading image file: ${imagePath}`)
-    const imageData = fs.readFileSync(imagePath).toString("base64")
+    // Verify file exists and is readable
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Image file not found at path: ${imagePath}`);
+    }
 
-    console.log("Sending image to Gemini for analysis")
+    const stats = fs.statSync(imagePath);
+    if (stats.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('Image file is too large (max 10MB)');
+    }
+
+    console.log(`Reading image file: ${imagePath}`);
+    const imageData = fs.readFileSync(imagePath);
+    const base64Data = imageData.toString('base64');
+
+    const model = getGeminiModel("gemini-1.5-pro");
+
+    console.log("Sending image to Gemini for analysis");
     const result = await model.generateContent([
       {
         inlineData: {
-          data: imageData,
+          data: base64Data,
           mimeType,
         },
       },
       "Give a detailed summary or description of the image content.",
-    ])
+    ]);
 
-    const response = await result.response
-    console.log("Received image analysis from Gemini")
-    return response.text()
+    const response = await result.response;
+    console.log("Received image analysis from Gemini");
+    return response.text();
   } catch (error) {
-    console.error("Error in summarizeImageWithGemini:", error)
-    throw new Error(`Failed to analyze image: ${error.message}`)
+    console.error("Error in summarizeImageWithGemini:", error);
+    throw new Error(`Failed to analyze image: ${error.message}`);
   }
 }
-
 /**
  * Truncate text to a specified number of sentences
  * @param {string} text - Text to truncate
