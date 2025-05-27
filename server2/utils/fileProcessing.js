@@ -1,7 +1,7 @@
-const fs = require("fs")
-const pdfParse = require("pdf-parse")
-const Tesseract = require("tesseract.js")
-const { getGeminiModel } = require("./ai")
+const fs = require("fs");
+const pdfParse = require("pdf-parse");
+const Tesseract = require("tesseract.js");
+const { getGeminiModel } = require("./ai");
 
 /**
  * Clean text by removing unwanted characters
@@ -10,9 +10,10 @@ const { getGeminiModel } = require("./ai")
  */
 function cleanText(text) {
   if (!text || typeof text !== "string") {
-    return ""
+    console.warn("cleanText received non-string input:", text);
+    return "";
   }
-  return text.replace(/[^\w\s.,!?'-]/g, "")
+  return text.replace(/[^\w\s.,!?'-]/g, "").replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -22,22 +23,36 @@ function cleanText(text) {
  */
 async function summarizeTextWithGemini(text) {
   try {
-    const model = getGeminiModel("gemini-2.0-flash")
+    if (!text || typeof text !== "string") {
+      throw new Error("Invalid text input for summarization");
+    }
+
+    const model = getGeminiModel("gemini-2.0-flash");
 
     const prompt = `
 Please provide a detailed summary with explanations and key points from the following content:
 ---
 ${text}
-`
+`;
 
-    console.log("Sending text to Gemini for summarization")
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    console.log("Received text summary from Gemini")
-    return response.text()
+    console.log("Sending text to Gemini for summarization");
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    
+    if (!response || !response.text) {
+      throw new Error("Invalid response from Gemini API");
+    }
+
+    const summaryText = response.text();
+    if (!summaryText) {
+      throw new Error("Empty summary returned from Gemini");
+    }
+
+    console.log("Received text summary from Gemini");
+    return summaryText;
   } catch (error) {
-    console.error("Error in summarizeTextWithGemini:", error)
-    throw new Error(`Failed to summarize text: ${error.message}`)
+    console.error("Error in summarizeTextWithGemini:", error);
+    throw new Error(`Failed to summarize text: ${error.message}`);
   }
 }
 
@@ -49,6 +64,11 @@ ${text}
  */
 async function summarizeImageWithGemini(imagePath, mimeType = null) {
   try {
+    // Validate input
+    if (!imagePath || !fs.existsSync(imagePath)) {
+      throw new Error("Invalid image path");
+    }
+
     // Determine MIME type from file extension if not provided
     if (!mimeType) {
       const extension = imagePath.split('.').pop().toLowerCase();
@@ -58,16 +78,11 @@ async function summarizeImageWithGemini(imagePath, mimeType = null) {
         png: 'image/png',
         gif: 'image/gif',
         webp: 'image/webp'
-      }[extension] || 'image/jpeg'; // default to jpeg if unknown
-    }
-
-    // Verify file exists and is readable
-    if (!fs.existsSync(imagePath)) {
-      throw new Error(`Image file not found at path: ${imagePath}`);
+      }[extension] || 'image/jpeg';
     }
 
     const stats = fs.statSync(imagePath);
-    if (stats.size > 10 * 1024 * 1024) { // 10MB limit
+    if (stats.size > 10 * 1024 * 1024) {
       throw new Error('Image file is too large (max 10MB)');
     }
 
@@ -89,13 +104,24 @@ async function summarizeImageWithGemini(imagePath, mimeType = null) {
     ]);
 
     const response = await result.response;
+    
+    if (!response || !response.text) {
+      throw new Error("Invalid response from Gemini API");
+    }
+
+    const summaryText = response.text();
+    if (!summaryText) {
+      throw new Error("Empty summary returned from Gemini");
+    }
+
     console.log("Received image analysis from Gemini");
-    return response.text();
+    return summaryText;
   } catch (error) {
     console.error("Error in summarizeImageWithGemini:", error);
     throw new Error(`Failed to analyze image: ${error.message}`);
   }
 }
+
 /**
  * Truncate text to a specified number of sentences
  * @param {string} text - Text to truncate
@@ -104,22 +130,23 @@ async function summarizeImageWithGemini(imagePath, mimeType = null) {
  */
 function truncateToSentences(text, minSentences = 10) {
   if (!text || typeof text !== "string") {
-    return ""
+    console.warn("truncateToSentences received non-string input:", text);
+    return "";
   }
 
-  const sentences = text.split(/[.!?]\s+/)
-  let truncatedText = sentences.slice(0, minSentences).join(". ")
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  let truncatedText = sentences.slice(0, minSentences).join(" ");
 
   // Add period if it doesn't end with punctuation
-  if (truncatedText && !truncatedText.match(/[.!?]$/)) {
-    truncatedText += "."
+  if (truncatedText && !/[.!?]$/.test(truncatedText)) {
+    truncatedText += ".";
   }
 
   if (truncatedText.length > 600) {
-    truncatedText = truncatedText.slice(0, 600) + "..."
+    truncatedText = truncatedText.slice(0, 597) + "...";
   }
 
-  return truncatedText
+  return truncatedText;
 }
 
 /**
@@ -129,14 +156,23 @@ function truncateToSentences(text, minSentences = 10) {
  */
 async function extractTextFromPDF(filePath) {
   try {
-    console.log(`Reading PDF file: ${filePath}`)
-    const dataBuffer = fs.readFileSync(filePath)
-    const data = await pdfParse(dataBuffer)
-    console.log(`Successfully extracted text from PDF. Character count: ${data.text.length}`)
-    return data.text
+    if (!filePath || !fs.existsSync(filePath)) {
+      throw new Error("Invalid PDF file path");
+    }
+
+    console.log(`Reading PDF file: ${filePath}`);
+    const dataBuffer = fs.readFileSync(filePath);
+    const data = await pdfParse(dataBuffer);
+    
+    if (!data.text) {
+      throw new Error("No text extracted from PDF");
+    }
+
+    console.log(`Successfully extracted text from PDF. Character count: ${data.text.length}`);
+    return data.text;
   } catch (error) {
-    console.error("Error extracting text from PDF:", error)
-    throw new Error(`Failed to extract text from PDF: ${error.message}`)
+    console.error("Error extracting text from PDF:", error);
+    throw new Error(`Failed to extract text from PDF: ${error.message}`);
   }
 }
 
@@ -147,15 +183,24 @@ async function extractTextFromPDF(filePath) {
  */
 async function extractTextFromImage(filePath) {
   try {
-    console.log(`Processing image with Tesseract OCR: ${filePath}`)
+    if (!filePath || !fs.existsSync(filePath)) {
+      throw new Error("Invalid image file path");
+    }
+
+    console.log(`Processing image with Tesseract OCR: ${filePath}`);
     const result = await Tesseract.recognize(filePath, "eng", {
       logger: (m) => console.log(`Tesseract: ${m.status} - ${Math.floor(m.progress * 100)}%`),
-    })
-    console.log(`OCR completed. Character count: ${result.data.text.length}`)
-    return result.data.text
+    });
+    
+    if (!result?.data?.text) {
+      throw new Error("No text extracted from image");
+    }
+
+    console.log(`OCR completed. Character count: ${result.data.text.length}`);
+    return result.data.text;
   } catch (error) {
-    console.error("Error in OCR processing:", error)
-    throw new Error(`OCR processing failed: ${error.message}`)
+    console.error("Error in OCR processing:", error);
+    throw new Error(`OCR processing failed: ${error.message}`);
   }
 }
 
@@ -166,35 +211,36 @@ async function extractTextFromImage(filePath) {
  */
 function containsMeaningfulText(text) {
   if (!text || typeof text !== "string") {
-    return false
+    return false;
+  }
+
+  const trimmedText = text.trim();
+  if (trimmedText.length < 10) {
+    return false;
   }
 
   // Count words (at least 3 chars) to filter out random character noise
-  const wordCount = text
-    .trim()
+  const wordCount = trimmedText
     .split(/\s+/)
-    .filter((word) => word.length > 2).length
+    .filter((word) => word.length > 2).length;
 
-  // Check for presence of proper sentences (starts with capital, ends with punctuation)
-  const containsRealSentences = /[A-Z][a-z]+[,.!?](\s|$)/.test(text)
+  // Check for presence of proper sentences
+  const containsRealSentences = /[A-Z][^.!?]*[.!?]/.test(trimmedText);
 
   // Check for common words that indicate real content
-  const commonWordsRegex = /\b(the|and|this|that|with|from|have|for|not|are|was|were|what|when|where|why|how)\b/i
-  const containsCommonWords = commonWordsRegex.test(text)
+  const commonWordsRegex = /\b(the|and|this|that|with|from|have|for|not|are|was|were)\b/i;
+  const containsCommonWords = commonWordsRegex.test(trimmedText);
 
-  // Ratio of alphanumeric to special characters - gibberish often has many special chars
-  const alphanumericCount = (text.match(/[a-zA-Z0-9]/g) || []).length
-  const totalChars = text.length
-  const alphanumericRatio = totalChars > 0 ? alphanumericCount / totalChars : 0
+  // Ratio of alphanumeric to special characters
+  const alphanumericCount = (trimmedText.match(/[a-zA-Z0-9]/g) || []).length;
+  const totalChars = trimmedText.length;
+  const alphanumericRatio = totalChars > 0 ? alphanumericCount / totalChars : 0;
 
   console.log(
-    `Text analysis - Word count: ${wordCount}, Contains sentences: ${containsRealSentences}, Contains common words: ${containsCommonWords}, Alphanumeric ratio: ${alphanumericRatio.toFixed(2)}`,
-  )
+    `Text analysis - Word count: ${wordCount}, Contains sentences: ${containsRealSentences}, Contains common words: ${containsCommonWords}, Alphanumeric ratio: ${alphanumericRatio.toFixed(2)}`
+  );
 
-  // Decision logic for what constitutes "meaningful" text
-  return (
-    (wordCount >= 5 && containsRealSentences && containsCommonWords) || (wordCount >= 10 && alphanumericRatio > 0.7)
-  )
+  return (wordCount >= 5 && containsRealSentences) || (wordCount >= 10 && alphanumericRatio > 0.7);
 }
 
 module.exports = {
@@ -205,4 +251,4 @@ module.exports = {
   extractTextFromPDF,
   extractTextFromImage,
   containsMeaningfulText,
-}
+};
