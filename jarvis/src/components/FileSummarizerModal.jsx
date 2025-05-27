@@ -69,7 +69,7 @@ export default function FileSummarizerModal({ onClose }) {
     const formData = new FormData()
     formData.append("file", file)
     try {
-      const res = await fetch("https://antler-1-4idg.onrender.com/api/files/upload", {
+      const res = await fetch("https://nexa-ai.onrender.com/api/files/upload", {
         method: "POST",
         body: formData,
       })
