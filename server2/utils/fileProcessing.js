@@ -62,29 +62,9 @@ ${text}
  * @param {string} mimeType - MIME type of image
  * @returns {Promise<string>} - Extracted and summarized content
  */
-async function summarizeImageWithGemini(imagePath, mimeType = null) {
+async function summarizeImageWithGemini(imagePath, mimeType = "image/png") {
   try {
-    // Validate input
-    if (!imagePath || !fs.existsSync(imagePath)) {
-      throw new Error("Invalid image path");
-    }
-
-    // Determine MIME type from file extension if not provided
-    if (!mimeType) {
-      const extension = imagePath.split('.').pop().toLowerCase();
-      mimeType = {
-        jpg: 'image/jpeg',
-        jpeg: 'image/jpeg',
-        png: 'image/png',
-        gif: 'image/gif',
-        webp: 'image/webp'
-      }[extension] || 'image/jpeg';
-    }
-
-    const stats = fs.statSync(imagePath);
-    if (stats.size > 10 * 1024 * 1024) {
-      throw new Error('Image file is too large (max 10MB)');
-    }
+    const model = getGeminiModel("gemini-1.5-pro")
 
     console.log(`Reading image file: ${imagePath}`);
     const imageData = fs.readFileSync(imagePath);
