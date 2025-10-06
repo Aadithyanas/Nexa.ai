@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Nexa.ai Logo](public/logo.png)
+
 
 **A comprehensive AI-powered assistant platform with advanced features including voice interaction, computer vision, file processing, and intelligent conversation management.**
 
@@ -214,15 +214,7 @@ EXPOSE 3000
 CMD ["npm", "run", "preview"]
 ```
 
-## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
 
 ### Development Guidelines
 - Follow React best practices
@@ -243,28 +235,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **React Team** for the amazing framework
 - **Vite Team** for the fast build tool
 
-## 📞 Support
 
-- **Documentation**: [Wiki](https://github.com/your-username/nexa-ai/wiki)
-- **Issues**: [GitHub Issues](https://github.com/your-username/nexa-ai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/nexa-ai/discussions)
-- **Email**: support@nexa-ai.com
-
-## 🔮 Roadmap
-
-- [ ] **Mobile App**: React Native version
-- [ ] **Plugin System**: Extensible architecture
-- [ ] **Advanced Analytics**: Usage insights and metrics
-- [ ] **Multi-language Support**: Internationalization
-- [ ] **API Documentation**: Comprehensive API docs
-- [ ] **Enterprise Features**: Team collaboration tools
 
 ---
 
-<div align="center">
-
-**Made with ❤️ by the Nexa.ai Team**
-
-[Website](https://nexa-ai.com) • [Documentation](https://docs.nexa-ai.com) • [Community](https://discord.gg/nexa-ai)
-
-</div>
